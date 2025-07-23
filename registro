@@ -1,0 +1,84 @@
+/**
+ * Este es el script actualizado y corregido para registrar las ventas.
+ *
+ * INSTRUCCIONES:
+ * 1. Reemplaza todo el código de tu proyecto de Apps Script con este.
+ * 2. Guarda los cambios (icono de disquete).
+ * 3. Vuelve a implementar el script:
+ * - Clic en "Implementar" -> "Gestionar implementaciones".
+ * - Selecciona tu implementación, clic en el lápiz (Editar).
+ * - En "Versión", elige "Nueva versión".
+ * - Clic en "Implementar".
+ */
+
+// ID de la hoja de cálculo donde se guardarán las ventas.
+const SPREADSHEET_ID = '1x7r2Gdf6Bf79rPSszsNS-5H6YlhgqmQJYh5AKppsj8U'; 
+
+// Nombre de la hoja dentro de la hoja de cálculo.
+const SHEET_NAME = 'Ventas'; 
+
+/**
+ * Esta función se ejecuta cuando se envía el formulario (POST).
+ */
+function doPost(e) {
+  try {
+    // Para depuración: Registra los datos recibidos.
+    // Puedes ver estos registros en la sección "Ejecuciones" de Apps Script.
+    Logger.log('Datos recibidos: ' + e.postData.contents);
+
+    const data = JSON.parse(e.postData.contents);
+
+    // Abre la hoja de cálculo por su ID para mayor seguridad.
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+    // Define los encabezados que la hoja debe tener.
+    const headers = ['Timestamp', 'Fecha Venta', 'Asesora', 'Cantidad', 'Producto', 'Método de Pago', 'Monto', 'Tipo de Venta', 'Modalidad'];
+
+    // Si la hoja no existe, la crea con los encabezados.
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(SHEET_NAME);
+      sheet.appendRow(headers);
+    } else if (sheet.getLastRow() === 0) { // Si la hoja está vacía, añade los encabezados.
+       sheet.appendRow(headers);
+    }
+
+    // Crea una marca de tiempo para el registro.
+    const timestamp = new Date();
+
+    // Añade la nueva fila con los datos recibidos. El orden es importante.
+    sheet.appendRow([
+      timestamp,
+      data.saleDate,
+      data.salesPerson,
+      data.quantity,
+      data.productName,
+      data.paymentMethod,
+      data.amount,
+      data.saleType,
+      data.saleModality
+    ]);
+
+    // Devuelve una respuesta de éxito clara al formulario.
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'status': 'success', 'message': 'Venta registrada correctamente.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    // Si algo sale mal, registra el error y lo devuelve al formulario.
+    Logger.log('Error en el script: ' + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'status': 'error', 'message': 'Error en el script: ' + error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Esta función se ejecuta cuando visitas la URL del script directamente.
+ * Sirve para verificar que la implementación está activa y funcionando.
+ */
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ 'status': 'success', 'message': 'El script está activo y listo para recibir datos.' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
