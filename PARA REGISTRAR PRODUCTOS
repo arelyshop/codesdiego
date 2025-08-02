@@ -1,0 +1,55 @@
+const SPREADSHEET_ID = '1mJm83fKuAsV_cJ4BXA9OAaAK9kX9bR21zCa7HgRlo5M'; 
+const SHEET_NAME = 'Inventario'; 
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+    const headers = [
+      "Fecha de Registro", "Nombre", "Precio (Venta)", "Precio (Compra)", 
+      "Precio (Mayoreo)", "SKU", "Cantidad", "Código de Barras", "URL Foto 1"
+    ];
+
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(SHEET_NAME);
+      sheet.appendRow(headers);
+    } else if (sheet.getLastRow() === 0) {
+      sheet.appendRow(headers);
+    }
+
+    const fechaRegistro = new Date().toLocaleDateString();
+
+    const newRow = [
+      fechaRegistro,
+      data.nombre || "N/A",
+      data.precioVenta || "N/A",
+      data.precioCompra || "N/A",
+      data.precioMayoreo || "N/A",
+      data.sku || "N/A",
+      data.cantidad || "N/A",
+      data.codigoBarras || "N/A",
+      data.urlFoto1 || "N/A"
+    ];
+    
+    sheet.appendRow(newRow);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'status': 'success', 'message': 'Producto registrado correctamente.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    Logger.log('Error en doPost: ' + error.toString());
+    return ContentService
+      .createTextOutput(JSON.stringify({ 'status': 'error', 'message': 'Error en el script: ' + error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return HtmlService.createHtmlOutput(
+    "<h1>API para Gestor de Inventario</h1><p>El script está funcionando correctamente. Esta URL está diseñada para recibir datos (POST) desde el formulario de inventario.</p>"
+  ).setTitle("API de Inventario Activa");
+}
